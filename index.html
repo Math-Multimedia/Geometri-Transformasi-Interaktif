@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformasi Bidang Koordinat Kartesius</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#293548;
+  --accent:#38bdf8;--accent2:#f472b6;--accent3:#34d399;--accent4:#fb923c;
+  --text:#f1f5f9;--text2:#94a3b8;--border:#334155;
+  --shadow:0 4px 32px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* CELEBRATION */
+#celebrate{position:fixed;inset:0;pointer-events:none;z-index:8000;overflow:hidden;display:none}
+.petal{position:absolute;top:-30px;border-radius:50%;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+#cel-msg{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  background:linear-gradient(135deg,#0f2744,#1e3a5f);
+  border:2px solid var(--accent3);border-radius:22px;padding:26px 34px;
+  text-align:center;z-index:8100;box-shadow:0 0 60px rgba(52,211,153,.45);
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);max-width:88vw;pointer-events:all;
+}
+#cel-msg.show{transform:translate(-50%,-50%) scale(1)}
+#cel-emoji{font-size:2.8rem;line-height:1;margin-bottom:6px}
+#cel-title{font-family:'Baloo 2',cursive;font-size:1.45rem;font-weight:800;color:var(--accent3);margin-bottom:5px}
+#cel-sub{font-size:.88rem;color:var(--text2);line-height:1.6}
+#cel-close{margin-top:13px;padding:7px 20px;background:var(--accent3);color:#0f172a;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.86rem;cursor:pointer}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--surface);border:1.5px solid var(--accent);color:var(--text);
+  padding:9px 18px;border-radius:13px;font-weight:700;font-size:.84rem;
+  z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s;
+  opacity:0;max-width:86vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5)
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#toast.success{border-color:var(--accent3);background:#0d2b1f;color:var(--accent3)}
+#toast.error{border-color:var(--accent2);background:#2b0d1f;color:var(--accent2)}
+#toast.warning{border-color:var(--accent4);color:var(--accent4)}
+
+/* MASCOT */
+#mascot{position:fixed;bottom:70px;right:12px;z-index:9998;display:flex;flex-direction:column;align-items:flex-end;gap:4px;pointer-events:none}
+#mascot-bubble{
+  background:var(--surface);border:1.5px solid var(--accent);border-radius:11px 11px 0 11px;
+  padding:7px 11px;font-size:.77rem;font-weight:700;color:var(--text);
+  max-width:185px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.4);
+  opacity:0;transform:scale(.85) translateY(8px);
+  transition:opacity .3s,transform .35s cubic-bezier(.34,1.56,.64,1)
+}
+#mascot-bubble.show{opacity:1;transform:scale(1) translateY(0)}
+#mascot-face{font-size:1.8rem;user-select:none}
+
+/* HEADER */
+header{
+  background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);
+  border-bottom:2px solid var(--accent);padding:11px 18px;
+  display:flex;align-items:center;gap:11px;
+  position:sticky;top:0;z-index:100;box-shadow:0 2px 24px rgba(56,189,248,.15)
+}
+header .icon{font-size:1.7rem;animation:spin 10s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+header h1{font-family:'Baloo 2',cursive;font-size:1.05rem;font-weight:800;color:var(--text);line-height:1.2}
+header h1 span{color:var(--accent)}
+header .badge{margin-left:auto;background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accent);font-size:.64rem;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:1px;white-space:nowrap}
+
+/* NAV */
+.steps-nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;padding:0 4px;scrollbar-width:none}
+.steps-nav::-webkit-scrollbar{display:none}
+.steps-nav button{flex:none;padding:9px 10px;background:none;border:none;border-bottom:3px solid transparent;color:var(--text2);font-family:'Nunito',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.steps-nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.steps-nav button:hover:not(.active){color:var(--text);background:rgba(255,255,255,.04)}
+.steps-nav button .num{width:17px;height:17px;border-radius:50%;background:var(--surface2);color:var(--text2);font-size:.63rem;display:flex;align-items:center;justify-content:center;font-weight:800}
+.steps-nav button.active .num{background:var(--accent);color:#0f172a}
+.steps-nav button.done .num{background:var(--accent3);color:#0f172a}
+.steps-nav button.done{color:var(--accent3)}
+
+/* MAIN */
+main{max-width:1100px;margin:0 auto;padding:18px 11px 90px}
+.section{display:none}
+.section.active{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:17px;margin-bottom:13px;box-shadow:var(--shadow)}
+.card-title{font-family:'Baloo 2',cursive;font-size:1.02rem;font-weight:700;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+
+/* STIMULUS */
+.stimulus{background:linear-gradient(135deg,#1e3a5f,#0f2744);border:1px solid var(--accent);border-radius:12px;padding:14px 17px;margin-bottom:13px}
+.stimulus p{color:var(--text);font-size:.89rem;line-height:1.7}
+.stimulus .hl{color:var(--accent);font-weight:800}
+
+/* CANVAS */
+.cw{background:#060f1e;border-radius:11px;border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center}
+canvas{display:block;border-radius:11px;max-width:100%}
+
+/* CONTROLS */
+.cg{display:flex;flex-direction:column;gap:3px}
+.cg label{font-size:.68rem;color:var(--text2);font-weight:700}
+.cg input[type=range]{accent-color:var(--accent);width:100px;cursor:pointer}
+.cg input[type=number]{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 8px;font-family:'Nunito',sans-serif;font-size:.84rem;width:62px;transition:border-color .2s;outline:none}
+.cg input[type=number]:focus{border-color:var(--accent)}
+.cg select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:6px 9px;font-family:'Nunito',sans-serif;font-size:.8rem;cursor:pointer}
+.vd{color:var(--accent);font-weight:800;font-size:.89rem}
+.cr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.cr>span{color:var(--text2);font-size:.8rem;font-weight:700}
+
+/* BUTTONS */
+.btn{padding:7px 15px;border-radius:9px;border:none;font-family:'Nunito',sans-serif;font-size:.81rem;font-weight:700;cursor:pointer;transition:all .18s}
+.btn-primary{background:var(--accent);color:#0f172a}
+.btn-primary:hover{background:#7dd3fc;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-success{background:var(--accent3);color:#0f172a}
+.btn-success:hover{background:#6ee7b7;transform:translateY(-1px)}
+.btn-orange{background:var(--accent4);color:#0f172a}
+.btn-orange:hover{background:#fdba74;transform:translateY(-1px)}
+
+/* FORMULA */
+.fml{background:#0a1628;border-left:4px solid var(--accent);border-radius:0 9px 9px 0;padding:9px 13px;font-family:'Courier New',monospace;font-size:.84rem;color:var(--accent3);margin:7px 0;letter-spacing:.3px}
+.fml span{color:var(--accent2)}
+
+/* TABS */
+.tabs{display:flex;gap:5px;margin-bottom:11px;flex-wrap:wrap}
+.tb{padding:6px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .18s}
+.tb.active{background:var(--accent);color:#0f172a;border-color:var(--accent)}
+.tb:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+/* INFO GRID */
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:9px;margin:9px 0}
+.ib{background:var(--surface2);border-radius:11px;padding:11px;border-left:3px solid var(--accent)}
+.ib.p{border-left-color:var(--accent2)}.ib.g{border-left-color:var(--accent3)}.ib.o{border-left-color:var(--accent4)}
+.ib h4{font-size:.83rem;font-weight:800;margin-bottom:3px}
+.ib p{font-size:.75rem;color:var(--text2);line-height:1.55}
+
+/* QUIZ */
+.qq{font-size:.91rem;font-weight:700;margin-bottom:11px;color:var(--text);line-height:1.55}
+.qopts{display:flex;flex-direction:column;gap:6px}
+.qo{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:9px 13px;cursor:pointer;font-size:.83rem;font-weight:600;transition:all .18s;text-align:left;color:var(--text)}
+.qo:hover:not(:disabled){border-color:var(--accent);color:var(--accent);transform:translateX(3px)}
+.qo.correct{background:rgba(52,211,153,.18);border-color:var(--accent3);color:var(--accent3);font-weight:800}
+.qo.wrong{background:rgba(244,114,182,.18);border-color:var(--accent2);color:var(--accent2)}
+.qo.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.qfb{margin-top:9px;padding:9px 13px;border-radius:9px;font-size:.83rem;font-weight:700;animation:fadeUp .25s ease;line-height:1.5}
+.qfb.ok{background:rgba(52,211,153,.12);color:var(--accent3);border:1px solid var(--accent3)}
+.qfb.err{background:rgba(244,114,182,.12);color:var(--accent2);border:1px solid var(--accent2)}
+
+/* RETRY BOX */
+#retry-box{display:none;margin-top:11px;background:rgba(251,146,60,.08);border:1px solid var(--accent4);border-radius:11px;padding:13px}
+#retry-box>p{font-size:.82rem;color:var(--accent4);font-weight:700;margin-bottom:8px}
+#retry-opts{display:flex;flex-direction:column;gap:5px}
+#retry-msg{margin-top:7px;font-size:.8rem;font-weight:700}
+
+/* PROGRESS */
+.pw{background:var(--surface2);border-radius:999px;height:6px;margin:5px 0 2px}
+.pb{height:6px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent3));transition:width .4s}
+.sd{font-size:2.4rem;font-weight:900;color:var(--accent);font-family:'Baloo 2',cursive}
+
+/* SEC HEADER */
+.sh{display:flex;align-items:flex-start;gap:9px;margin-bottom:15px;flex-wrap:wrap}
+.sh .em{font-size:1.6rem;flex-shrink:0}
+.sh h2{font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:800}
+.sh p{font-size:.78rem;color:var(--text2);margin-top:2px}
+.pb2{margin-left:auto;padding:3px 11px;border-radius:20px;font-size:.63rem;font-weight:800;letter-spacing:1px;background:rgba(56,189,248,.12);border:1px solid var(--accent);color:var(--accent);white-space:nowrap}
+
+/* NAV FOOTER */
+.nf{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:9px;flex-wrap:wrap}
+
+/* LEGEND */
+.leg{display:flex;gap:11px;flex-wrap:wrap;margin-top:5px}
+.ld{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text2)}
+.ldot{width:9px;height:9px;border-radius:50%}
+
+/* TABLES */
+.st{width:100%;border-collapse:collapse;font-size:.8rem}
+.st th{background:var(--surface2);color:var(--accent);font-weight:800;padding:8px 9px;text-align:left;border-bottom:1px solid var(--border)}
+.st td{padding:8px 9px;border-bottom:1px solid var(--border);color:var(--text)}
+.st tr:last-child td{border-bottom:none}
+.st tr:hover td{background:rgba(56,189,248,.04)}
+
+/* RANG CARDS */
+.rg{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:11px}
+.rc{background:var(--surface2);border-radius:12px;padding:13px;border-top:3px solid var(--accent)}
+.rc.p{border-top-color:var(--accent2)}.rc.g{border-top-color:var(--accent3)}.rc.o{border-top-color:var(--accent4)}
+.rc h3{font-size:.88rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.rc ul{list-style:none}
+.rc ul li{font-size:.75rem;color:var(--text2);padding:2px 0;display:flex;gap:4px}
+.rc ul li::before{content:"→";color:var(--accent);font-weight:800;flex-shrink:0}
+
+/* IDENTITY */
+.ids{background:linear-gradient(135deg,#0f2744,#1e293b);border:1px solid var(--border);border-radius:15px;padding:16px;margin-bottom:13px}
+.idg{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:9px;margin-top:11px}
+.idc{background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:9px;transition:all .2s;cursor:default}
+.idc:hover{border-color:var(--accent);background:rgba(56,189,248,.12);transform:translateY(-2px)}
+.ida{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;background:rgba(56,189,248,.12)}
+.idn .name{font-weight:800;font-size:.82rem;color:var(--text);line-height:1.3}
+.idn .nim{font-size:.68rem;color:var(--accent);font-weight:700;margin-top:2px;font-family:'Courier New',monospace}
+
+/* FBi */
+.fbi{padding:7px 11px;border-radius:8px;font-size:.79rem;font-weight:700;margin-top:7px;display:none;animation:fadeUp .25s ease;line-height:1.5}
+.fbi.ok{background:rgba(52,211,153,.1);color:var(--accent3);border:1px solid rgba(52,211,153,.3);display:block}
+.fbi.err{background:rgba(244,114,182,.1);color:var(--accent2);border:1px solid rgba(244,114,182,.3);display:block}
+.fbi.info{background:rgba(56,189,248,.1);color:var(--accent);border:1px solid rgba(56,189,248,.3);display:block}
+.fbi.warn{background:rgba(251,146,60,.1);color:var(--accent4);border:1px solid rgba(251,146,60,.3);display:block}
+
+/* Q-CARD */
+.qc{background:var(--surface2);border-radius:9px;padding:11px;border-left:3px solid var(--accent);cursor:pointer;transition:all .2s;margin-bottom:8px}
+.qc:hover{opacity:.9}
+.qc .qh{display:flex;align-items:center;justify-content:space-between}
+.qc .ql{font-weight:800;font-size:.84rem}
+.qc .qt{font-size:.72rem;color:var(--text2)}
+.qc .qb{display:none;margin-top:8px;font-size:.84rem;line-height:1.6}
+
+/* TEXTAREA */
+.ta{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.86rem;resize:vertical;min-height:90px;transition:border-color .2s;outline:none}
+.ta:focus{border-color:var(--accent)}
+
+@media(max-width:600px){
+  header h1{font-size:.84rem}
+  main{padding:11px 4px 90px}
+  .cg input[type=range]{width:78px}
+}
+</style>
+</head>
+<body>
+
+<!-- CELEBRATION -->
+<div id="celebrate"></div>
+<div id="cel-msg">
+  <div id="cel-emoji">🎉</div>
+  <div id="cel-title">Luar Biasa!</div>
+  <div id="cel-sub">Jawabanmu benar!</div>
+  <button id="cel-close" onclick="closeCel()">Lanjut ✓</button>
+</div>
+
+<div id="toast"></div>
+<div id="mascot"><div id="mascot-bubble"></div><div id="mascot-face">🤖</div></div>
+
+<header>
+  <span class="icon">📐</span>
+  <div>
+    <h1>Transformasi <span>Bidang Koordinat</span> Kartesius</h1>
+    <div style="font-size:.66rem;color:var(--text2);margin-top:1px;">Guided Discovery Learning • Kelas VIII SMP</div>
+  </div>
+  <div class="badge">MATEMATIKA</div>
+</header>
+
+<nav class="steps-nav">
+  <button class="active" onclick="go(0)"><span class="num">1</span> Simulation</button>
+  <button onclick="go(1)"><span class="num">2</span> Problem Statement</button>
+  <button onclick="go(2)"><span class="num">3</span> Data Collection</button>
+  <button onclick="go(3)"><span class="num">4</span> Data Processing</button>
+  <button onclick="go(4)"><span class="num">5</span> Verification</button>
+  <button onclick="go(5)"><span class="num">6</span> Generalization</button>
+  <button onclick="go(6)"><span class="num">🎯</span> Kuis</button>
+</nav>
+
+<main>
+
+<!-- ═══ SEC 0: SIMULATION ═══ -->
+<div class="section active" id="sec0">
+  <div class="sh"><span class="em">🎮</span>
+    <div><h2>Simulation / Pemberian Rangsang</h2><p>Membangun rasa ingin tahu melalui situasi nyata</p></div>
+    <span class="pb2">FASE 1</span>
+  </div>
+
+  <div class="stimulus">
+    <p>🎮 <span class="hl">Pernahkah kamu bermain game dengan karakter yang bisa bergerak, berbalik, atau diputar?</span> Ketika karakter berpindah di peta, ia bergerak dari satu koordinat ke koordinat lain. Semua gerakan itu bisa dijelaskan dengan matematika — yaitu <strong>Transformasi Bidang Koordinat Kartesius!</strong> Klik tombol simulasi di bawah untuk melihat aksinya! 👇</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🕹️ Simulasi Mini — Amati Pergerakan Titik!</div>
+    <div class="cw" style="margin-bottom:9px;"><canvas id="simCanvas" width="530" height="255"></canvas></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-primary" onclick="runSim('translasi')">▶ Geser</button>
+      <button class="btn btn-secondary" onclick="runSim('refleksi')">▶ Cermin</button>
+      <button class="btn btn-secondary" onclick="runSim('rotasi')">▶ Putar</button>
+      <button class="btn btn-secondary" onclick="runSim('dilatasi')">▶ Skala</button>
+      <button class="btn btn-orange" onclick="resetSim()">↺ Reset</button>
+    </div>
+    <div id="sim-fb" class="fbi info" style="margin-top:8px;display:none;"></div>
+  </div>
+
+  <div class="ig">
+    <div class="ib"><h4>🔵 Translasi</h4><p>Menggeser titik ke arah tertentu tanpa mengubah bentuk atau ukuran.</p></div>
+    <div class="ib p"><h4>🔴 Refleksi</h4><p>Mencerminkan titik terhadap suatu sumbu — seperti bayangan di cermin.</p></div>
+    <div class="ib g"><h4>🟢 Rotasi</h4><p>Memutar titik sebesar sudut tertentu mengelilingi titik pusat O(0,0).</p></div>
+    <div class="ib o"><h4>🟠 Dilatasi</h4><p>Memperbesar atau memperkecil bangun dengan faktor skala k dari titik pusat.</p></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎯 Tujuan Pembelajaran</div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+      <li style="display:flex;gap:7px;align-items:flex-start;font-size:.85rem;"><span style="color:var(--accent3);flex-shrink:0;">✓</span>Melakukan transformasi tunggal (translasi, refleksi, rotasi, dilatasi) pada bidang koordinat Kartesius.</li>
+      <li style="display:flex;gap:7px;align-items:flex-start;font-size:.85rem;"><span style="color:var(--accent3);flex-shrink:0;">✓</span>Menentukan koordinat bayangan hasil transformasi tunggal dengan tepat.</li>
+      <li style="display:flex;gap:7px;align-items:flex-start;font-size:.85rem;"><span style="color:var(--accent3);flex-shrink:0;">✓</span>Menemukan dan menggeneralisasi rumus transformasi tunggal secara mandiri.</li>
+    </ul>
+  </div>
+
+  <div class="ids">
+    <div class="card-title" style="margin-bottom:2px;">👩‍💻 Identitas Penyusun Multimedia</div>
+    <p style="font-size:.74rem;color:var(--text2);">Program Studi Pendidikan Matematika — <strong style="color:var(--accent)">UIN Walisongo Semarang</strong></p>
+    <div class="idg">
+      <div class="idc" onclick="toast('info','👩 Zahrotun Nafi\'ah — 24080560031')">
+        <div class="ida">👩</div><div class="idn"><div class="name">Zahrotun Nafi'ah</div><div class="nim">24080560031</div></div>
+      </div>
+      <div class="idc" onclick="toast('info','👩 Shinta Alifiana Dewi — 24080560041')">
+        <div class="ida">👩</div><div class="idn"><div class="name">Shinta Alifiana Dewi</div><div class="nim">24080560041</div></div>
+      </div>
+      <div class="idc" onclick="toast('info','👩 Shella Ramadhani — 24080560046')">
+        <div class="ida">👩</div><div class="idn"><div class="name">Shella Ramadhani</div><div class="nim">24080560046</div></div>
+      </div>
+      <div class="idc" onclick="toast('info','👨 Muhammad Danda — 24080560047')">
+        <div class="ida">👨</div><div class="idn"><div class="name">Muhammad Danda Kholilurrohman</div><div class="nim">24080560047</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nf"><div></div>
+    <button class="btn btn-primary" onclick="go(1);toast('info','📋 Yuk identifikasi masalah!')">Mulai Belajar →</button>
+  </div>
+</div>
+
+<!-- ═══ SEC 1: PROBLEM STATEMENT ═══ -->
+<div class="section" id="sec1">
+  <div class="sh"><span class="em">🔍</span>
+    <div><h2>Problem Statement</h2><p>Pernyataan / Identifikasi Masalah — Merumuskan pertanyaan penelitian</p></div>
+    <span class="pb2">FASE 2</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">❓ Pertanyaan Pemandu — Klik untuk Membaca!</div>
+    <div class="qc" style="border-left-color:var(--accent);" onclick="toggleQ(this)">
+      <div class="qh"><span class="ql" style="color:var(--accent);">🔵 Masalah 1 — Translasi</span><span class="qt">Klik ▾</span></div>
+      <div class="qb"><p>Jika titik A(2,3) digeser 4 satuan ke kanan dan 2 satuan ke bawah, di mana posisi titik A yang baru? <strong>Bagaimana cara menghitungnya?</strong></p>
+        <div class="fbi info" style="margin-top:6px;">💡 Pergeseran horizontal mempengaruhi x, pergeseran vertikal mempengaruhi y.</div></div>
+    </div>
+    <div class="qc" style="border-left-color:var(--accent2);" onclick="toggleQ(this)">
+      <div class="qh"><span class="ql" style="color:var(--accent2);">🔴 Masalah 2 — Refleksi</span><span class="qt">Klik ▾</span></div>
+      <div class="qb"><p>Apa yang terjadi pada koordinat titik ketika dicerminkan terhadap sumbu-x? <strong>Adakah pola matematikanya?</strong></p>
+        <div class="fbi info" style="margin-top:6px;">💡 Komponen mana yang berubah tanda saat dicerminkan terhadap sumbu-x?</div></div>
+    </div>
+    <div class="qc" style="border-left-color:var(--accent3);" onclick="toggleQ(this)">
+      <div class="qh"><span class="ql" style="color:var(--accent3);">🟢 Masalah 3 — Rotasi</span><span class="qt">Klik ▾</span></div>
+      <div class="qb"><p>Jika titik B(3,4) diputar 90° CCW terhadap O(0,0), di mana bayangan B? <strong>Apakah jarak ke pusat berubah?</strong></p>
+        <div class="fbi info" style="margin-top:6px;">💡 Bagaimana x dan y bertukar peran saat rotasi 90°?</div></div>
+    </div>
+    <div class="qc" style="border-left-color:var(--accent4);" onclick="toggleQ(this)">
+      <div class="qh"><span class="ql" style="color:var(--accent4);">🟠 Masalah 4 — Dilatasi</span><span class="qt">Klik ▾</span></div>
+      <div class="qb"><p>Bagaimana jarak titik dari pusat berubah dengan dilatasi k=2? <strong>Apakah bentuk bangun tetap sama?</strong></p>
+        <div class="fbi info" style="margin-top:6px;">💡 Seberapa jauh titik bayangan dari O dibandingkan titik asalnya?</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✏️ Hipotesis Awal — Tuliskan Dugaanmu!</div>
+    <p style="font-size:.79rem;color:var(--text2);margin-bottom:7px;">Sebelum eksplorasi, tuliskan dugaan jawabanmu untuk setiap masalah di atas:</p>
+    <textarea id="hipotesis" class="ta" placeholder="Contoh: Saya menduga bahwa pada translasi, nilai x bertambah sesuai pergeseran horizontal dan y bertambah sesuai pergeseran vertikal..." oninput="document.getElementById('hip-ch').textContent=this.value.length+' karakter'"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <div id="hip-ch" style="font-size:.69rem;color:var(--text2);">0 karakter</div>
+      <button class="btn btn-success" style="font-size:.78rem;" onclick="saveHip()">💾 Simpan Hipotesis</button>
+    </div>
+    <div id="hip-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="nf">
+    <button class="btn btn-secondary" onclick="go(0)">← Kembali</button>
+    <button class="btn btn-primary" onclick="go(2);toast('info','🧪 Saatnya kumpulkan data! Coba semua jenis transformasi.')">Kumpulkan Data →</button>
+  </div>
+</div>
+
+<!-- ═══ SEC 2: DATA COLLECTION ═══ -->
+<div class="section" id="sec2">
+  <div class="sh"><span class="em">🧪</span>
+    <div><h2>Data Collection / Pengumpulan Data</h2><p>Eksplorasi interaktif — coba sendiri setiap transformasi!</p></div>
+    <span class="pb2">FASE 3</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tb active" onclick="setT('translasi',this)">🔵 Translasi</button>
+    <button class="tb" onclick="setT('refleksi',this)">🔴 Refleksi</button>
+    <button class="tb" onclick="setT('rotasi',this)">🟢 Rotasi</button>
+    <button class="tb" onclick="setT('dilatasi',this)">🟠 Dilatasi</button>
+  </div>
+
+  <div class="cw" style="margin-bottom:7px;"><canvas id="mainCanvas" width="570" height="350"></canvas></div>
+  <div class="leg">
+    <div class="ld"><div class="ldot" style="background:var(--accent2)"></div>Titik Asal P</div>
+    <div class="ld"><div class="ldot" style="background:var(--accent3)"></div>Bayangan P'</div>
+    <div class="ld"><div class="ldot" style="background:#475569;border:1px dashed #94a3b8;"></div>Garis bantu</div>
+  </div>
+
+  <div class="card" style="margin-top:9px;">
+    <div class="card-title" id="transTitle">🔵 Translasi</div>
+    <div class="cr">
+      <span>Titik Asal P :</span>
+      <div class="cg"><label>x</label><input type="number" id="px" value="3" min="-6" max="6" oninput="onCC()"></div>
+      <div class="cg"><label>y</label><input type="number" id="py" value="2" min="-6" max="6" oninput="onCC()"></div>
+    </div>
+
+    <div id="ct"><!-- translasi -->
+      <div class="fml">Rumus: <span>P'(x + a, y + b)</span></div>
+      <div class="cr"><span>Pergeseran:</span>
+        <div class="cg"><label>a (horizontal) = <span class="vd" id="v-a">3</span></label><input type="range" min="-6" max="6" value="3" id="sl-a" oninput="uv('v-a',this.value);drawScene();feedT()"></div>
+        <div class="cg"><label>b (vertikal) = <span class="vd" id="v-b">2</span></label><input type="range" min="-6" max="6" value="2" id="sl-b" oninput="uv('v-b',this.value);drawScene();feedT()"></div>
+      </div>
+      <div id="fb-t" class="fbi info"></div>
+    </div>
+
+    <div id="cr" style="display:none;"><!-- refleksi -->
+      <div class="fml" style="font-size:.78rem;">sb-x:<span>(x,−y)</span> | sb-y:<span>(−x,y)</span> | y=x:<span>(y,x)</span> | y=−x:<span>(−y,−x)</span> | O:<span>(−x,−y)</span></div>
+      <div class="cg" style="margin-top:7px;"><label>Pilih Sumbu Pencerminan</label>
+        <select id="ref-axis" onchange="drawScene();feedR()">
+          <option value="x">Sumbu-x</option><option value="y">Sumbu-y</option>
+          <option value="yx">Garis y = x</option><option value="ynx">Garis y = −x</option>
+          <option value="o">Titik Pusat O(0,0)</option>
+        </select>
+      </div>
+      <div id="fb-r" class="fbi info"></div>
+    </div>
+
+    <div id="cro" style="display:none;"><!-- rotasi -->
+      <div class="fml" style="font-size:.78rem;">90° CCW:<span>(−y,x)</span> | 180°:<span>(−x,−y)</span> | 270° CCW:<span>(y,−x)</span></div>
+      <div class="cg" style="margin-top:7px;"><label>Pilih Sudut Rotasi (pusat O)</label>
+        <select id="rot-angle" onchange="drawScene();feedRo()">
+          <option value="90">90° (berlawanan arah jarum jam)</option>
+          <option value="180">180°</option><option value="270">270° (searah jarum jam)</option>
+        </select>
+      </div>
+      <div id="fb-ro" class="fbi info"></div>
+    </div>
+
+    <div id="cd" style="display:none;"><!-- dilatasi -->
+      <div class="fml">Rumus: <span>P'(k·x, k·y)</span> — k = faktor skala</div>
+      <div class="cg" style="margin-top:7px;"><label>Faktor Skala k = <span class="vd" id="v-k">2</span></label>
+        <input type="range" min="-3" max="3" step="0.5" value="2" id="sl-k" oninput="uv('v-k',this.value);drawScene();feedD()">
+      </div>
+      <div id="fb-d" class="fbi info"></div>
+    </div>
+
+    <div style="margin-top:11px;background:var(--surface2);border-radius:9px;padding:11px;display:flex;gap:11px;flex-wrap:wrap;align-items:center;">
+      <div><div style="font-size:.66rem;color:var(--text2);font-weight:700;margin-bottom:2px;">TITIK ASAL</div><div style="font-size:1rem;font-weight:800;color:var(--accent2);" id="res-orig">P(3, 2)</div></div>
+      <div style="font-size:1.2rem;color:var(--text2);">⟶</div>
+      <div><div style="font-size:.66rem;color:var(--text2);font-weight:700;margin-bottom:2px;">BAYANGAN</div><div style="font-size:1rem;font-weight:800;color:var(--accent3);" id="res-img">P'(?, ?)</div></div>
+      <div style="margin-left:auto;"><div style="font-size:.66rem;color:var(--text2);font-weight:700;margin-bottom:2px;">PERUBAHAN</div><div style="font-size:.79rem;font-weight:700;color:var(--accent4);" id="res-delta">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Tabel Pengumpulan Data</div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:7px;">Catat setiap percobaan. Targetkan minimal <strong>8 baris data</strong> untuk menemukan pola!</p>
+    <div style="overflow-x:auto;">
+      <table class="st"><thead><tr><th>No</th><th>Jenis</th><th>Titik Asal</th><th>Parameter</th><th>Bayangan</th><th>Pola</th></tr></thead>
+      <tbody id="ekspBody"></tbody></table>
+    </div>
+    <div id="eksp-cnt" style="font-size:.74rem;color:var(--text2);margin-top:5px;">0 data tercatat</div>
+    <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="addRow()">+ Catat Data Ini</button>
+      <button class="btn btn-secondary" onclick="clearEksp()">🗑 Hapus</button>
+    </div>
+    <div id="eksp-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="nf">
+    <button class="btn btn-secondary" onclick="go(1)">← Kembali</button>
+    <button class="btn btn-primary" onclick="go(3);toast('info','⚙️ Olah data yang sudah dikumpulkan!')">Olah Data →</button>
+  </div>
+</div>
+
+<!-- ═══ SEC 3: DATA PROCESSING ═══ -->
+<div class="section" id="sec3">
+  <div class="sh"><span class="em">⚙️</span>
+    <div><h2>Data Processing / Pengolahan Data</h2><p>Analisis pola dari data — temukan rumus transformasimu sendiri!</p></div>
+    <span class="pb2">FASE 4</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔎 Analisis Pola — Isi Berdasarkan Datamu!</div>
+    <p style="font-size:.78rem;color:var(--text2);margin-bottom:11px;">Berdasarkan tabel datamu, tuliskan rumus yang kamu temukan untuk setiap transformasi:</p>
+    <div style="display:flex;flex-direction:column;gap:9px;">
+      <div style="background:var(--surface2);border-radius:9px;padding:12px;border-left:3px solid var(--accent);">
+        <div style="font-weight:800;color:var(--accent);margin-bottom:5px;font-size:.84rem;">🔵 Translasi T(a, b)</div>
+        <p style="font-size:.79rem;margin-bottom:5px;">Dari datamu: jika a positif, titik bergeser ke kanan atau kiri? Tulis rumusnya!</p>
+        <input id="dp1" oninput="chDP(1)" placeholder="x' = x + ..., y' = y + ..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s">
+        <div id="dp1-fb" class="fbi" style="display:none;"></div>
+      </div>
+      <div style="background:var(--surface2);border-radius:9px;padding:12px;border-left:3px solid var(--accent2);">
+        <div style="font-weight:800;color:var(--accent2);margin-bottom:5px;font-size:.84rem;">🔴 Refleksi terhadap Sumbu-x</div>
+        <p style="font-size:.79rem;margin-bottom:5px;">Komponen manakah yang berubah tanda? Tulis rumusnya!</p>
+        <input id="dp2" oninput="chDP(2)" placeholder="x' = ..., y' = ..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s">
+        <div id="dp2-fb" class="fbi" style="display:none;"></div>
+      </div>
+      <div style="background:var(--surface2);border-radius:9px;padding:12px;border-left:3px solid var(--accent3);">
+        <div style="font-weight:800;color:var(--accent3);margin-bottom:5px;font-size:.84rem;">🟢 Rotasi 90° CCW terhadap O</div>
+        <p style="font-size:.79rem;margin-bottom:5px;">Bagaimana x dan y bertukar? Tulis rumusnya!</p>
+        <input id="dp3" oninput="chDP(3)" placeholder="x' = ..., y' = ..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s">
+        <div id="dp3-fb" class="fbi" style="display:none;"></div>
+      </div>
+      <div style="background:var(--surface2);border-radius:9px;padding:12px;border-left:3px solid var(--accent4);">
+        <div style="font-weight:800;color:var(--accent4);margin-bottom:5px;font-size:.84rem;">🟠 Dilatasi [O, k]</div>
+        <p style="font-size:.79rem;margin-bottom:5px;">Bagaimana k mempengaruhi koordinat bayangan? Tulis rumusnya!</p>
+        <input id="dp4" oninput="chDP(4)" placeholder="x' = ..., y' = ..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s">
+        <div id="dp4-fb" class="fbi" style="display:none;"></div>
+      </div>
+    </div>
+    <div style="margin-top:11px;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="showAllDP()">✅ Lihat Rumus Lengkap</button>
+      <button class="btn btn-secondary" onclick="[1,2,3,4].forEach(chDP);toast('info','🔍 Semua jawaban diperiksa!')">🔍 Periksa Semua</button>
+    </div>
+    <div id="dp-all" style="display:none;margin-top:11px;background:var(--surface2);border-radius:9px;padding:12px;">
+      <div style="font-weight:800;color:var(--accent3);margin-bottom:7px;">✅ Rumus Lengkap:</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:7px;">
+        <div style="background:#0a1628;border-radius:7px;padding:9px;"><div style="color:var(--accent);font-weight:800;font-size:.75rem;margin-bottom:3px;">TRANSLASI T(a,b)</div><code style="color:var(--accent3);font-size:.79rem;">x' = x + a, y' = y + b</code></div>
+        <div style="background:#0a1628;border-radius:7px;padding:9px;"><div style="color:var(--accent2);font-weight:800;font-size:.75rem;margin-bottom:3px;">REFLEKSI sumbu-x</div><code style="color:var(--accent3);font-size:.79rem;">x' = x, y' = −y</code></div>
+        <div style="background:#0a1628;border-radius:7px;padding:9px;"><div style="color:var(--accent3);font-weight:800;font-size:.75rem;margin-bottom:3px;">ROTASI 90° CCW</div><code style="color:var(--accent3);font-size:.79rem;">x' = −y, y' = x</code></div>
+        <div style="background:#0a1628;border-radius:7px;padding:9px;"><div style="color:var(--accent4);font-weight:800;font-size:.75rem;margin-bottom:3px;">DILATASI [O,k]</div><code style="color:var(--accent3);font-size:.79rem;">x' = k·x, y' = k·y</code></div>
+      </div>
+    </div>
+    <div id="dp-all-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🖊️ Papan Kerja (Whiteboard)</div>
+    <canvas id="whiteCanvas" width="550" height="250" style="background:#f0f9ff;border-radius:9px;border:1px solid var(--border);cursor:crosshair;touch-action:none;display:block;max-width:100%;"></canvas>
+    <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <input type="color" id="penColor" value="#1e40af" style="width:27px;height:27px;border:none;cursor:pointer;border-radius:4px;">
+      <div class="cg"><label>Ukuran</label><input type="range" min="1" max="14" value="3" id="penSize" style="width:68px;"></div>
+      <button class="btn btn-secondary" onclick="clearWhite()">🗑 Bersihkan</button>
+      <button class="btn btn-primary" onclick="toast('success','💾 Catatan tersimpan!')">💾 Simpan</button>
+    </div>
+  </div>
+
+  <div class="nf">
+    <button class="btn btn-secondary" onclick="go(2)">← Kembali</button>
+    <button class="btn btn-primary" onclick="go(4);toast('info','🔬 Verifikasi rumus yang telah kamu temukan!')">Verifikasi →</button>
+  </div>
+</div>
+
+<!-- ═══ SEC 4: VERIFICATION ═══ -->
+<div class="section" id="sec4">
+  <div class="sh"><span class="em">🔬</span>
+    <div><h2>Verification / Pembuktian</h2><p>Uji dan buktikan kebenaran rumus yang telah ditemukan</p></div>
+    <span class="pb2">FASE 5</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📐 Tabel Referensi Rumus</div>
+    <div style="overflow-x:auto;">
+      <table class="st"><thead><tr><th>Transformasi</th><th>Rumus</th><th>Catatan</th></tr></thead>
+      <tbody>
+        <tr><td>Translasi T(a,b)</td><td><code style="color:var(--accent3)">(x+a, y+b)</code></td><td>Bentuk & ukuran tetap</td></tr>
+        <tr><td>Refleksi sumbu-x</td><td><code style="color:var(--accent3)">(x, −y)</code></td><td>Simetri thd sumbu-x</td></tr>
+        <tr><td>Refleksi sumbu-y</td><td><code style="color:var(--accent3)">(−x, y)</code></td><td>Simetri thd sumbu-y</td></tr>
+        <tr><td>Refleksi y = x</td><td><code style="color:var(--accent3)">(y, x)</code></td><td>x dan y ditukar</td></tr>
+        <tr><td>Refleksi y = −x</td><td><code style="color:var(--accent3)">(−y, −x)</code></td><td>Tukar + negasi</td></tr>
+        <tr><td>Rotasi 90° CCW (O)</td><td><code style="color:var(--accent3)">(−y, x)</code></td><td>Jarak ke O tetap</td></tr>
+        <tr><td>Rotasi 180° (O)</td><td><code style="color:var(--accent3)">(−x, −y)</code></td><td>Jarak ke O tetap</td></tr>
+        <tr><td>Rotasi 270° CCW (O)</td><td><code style="color:var(--accent3)">(y, −x)</code></td><td>Jarak ke O tetap</td></tr>
+        <tr><td>Dilatasi [O, k]</td><td><code style="color:var(--accent3)">(kx, ky)</code></td><td>Ukuran berubah k×</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✍️ Soal Verifikasi — Buktikan Rumusmu!</div>
+    <div id="verSoal"></div>
+    <div style="margin-top:11px;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="checkVer()">✅ Periksa Semua</button>
+      <button class="btn btn-secondary" onclick="showVerAns()">💡 Tampilkan Jawaban</button>
+    </div>
+    <div id="ver-score" style="display:none;margin-top:11px;background:var(--surface2);border-radius:9px;padding:11px;text-align:center;">
+      <div style="font-size:1.5rem;font-weight:900;font-family:'Baloo 2',cursive;color:var(--accent);" id="ver-num"></div>
+      <div style="font-size:.8rem;color:var(--text2);margin-top:3px;" id="ver-msg"></div>
+    </div>
+  </div>
+
+  <div class="nf">
+    <button class="btn btn-secondary" onclick="go(3)">← Kembali</button>
+    <button class="btn btn-primary" onclick="go(5);toast('success','🏆 Saatnya menarik kesimpulanmu sendiri!')">Tarik Kesimpulan →</button>
+  </div>
+</div>
+
+<!-- ═══ SEC 5: GENERALIZATION ═══ -->
+<div class="section" id="sec5">
+  <div class="sh"><span class="em">🏆</span>
+    <div><h2>Generalization / Menarik Kesimpulan</h2><p>Simpulkan sendiri apa yang telah kamu pelajari — dengan kata-katamu sendiri!</p></div>
+    <span class="pb2">FASE 6</span>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,#0f2744,#1e293b);border-color:var(--accent3);">
+    <div class="card-title" style="color:var(--accent3);">💡 Panduan Menyimpulkan</div>
+    <p style="font-size:.84rem;line-height:1.7;color:var(--text);">Berdasarkan seluruh proses yang telah kamu jalani, <strong style="color:var(--accent3)">tuliskan kesimpulanmu sendiri</strong> untuk setiap jenis transformasi. Gunakan kata-katamu sendiri — jangan menyalin dari referensi! ✨</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔵 Kesimpulan 1: Translasi</div>
+    <p style="font-size:.79rem;color:var(--text2);margin-bottom:7px;">Apa yang terjadi pada koordinat titik saat dilakukan translasi T(a,b)? Bagaimana rumusnya?</p>
+    <textarea id="concl1" class="ta" placeholder="Tulis kesimpulanmu tentang translasi di sini..." oninput="upCC(1,this.value)"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <div id="c1-ch" style="font-size:.68rem;color:var(--text2);">0 karakter</div>
+      <button class="btn btn-success" style="font-size:.76rem;padding:5px 12px;" onclick="saveConcl(1)">💾 Simpan</button>
+    </div>
+    <div id="c1-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">🔴 Kesimpulan 2: Refleksi</div>
+    <p style="font-size:.79rem;color:var(--text2);margin-bottom:7px;">Apa pola yang terjadi saat refleksi terhadap sumbu-x, sumbu-y, dan garis y=x?</p>
+    <textarea id="concl2" class="ta" placeholder="Tulis kesimpulanmu tentang refleksi di sini..." oninput="upCC(2,this.value)"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <div id="c2-ch" style="font-size:.68rem;color:var(--text2);">0 karakter</div>
+      <button class="btn btn-success" style="font-size:.76rem;padding:5px 12px;" onclick="saveConcl(2)">💾 Simpan</button>
+    </div>
+    <div id="c2-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">🟢 Kesimpulan 3: Rotasi</div>
+    <p style="font-size:.79rem;color:var(--text2);margin-bottom:7px;">Bagaimana koordinat berubah saat rotasi 90°, 180°, dan 270°? Apa yang tetap sama?</p>
+    <textarea id="concl3" class="ta" placeholder="Tulis kesimpulanmu tentang rotasi di sini..." oninput="upCC(3,this.value)"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <div id="c3-ch" style="font-size:.68rem;color:var(--text2);">0 karakter</div>
+      <button class="btn btn-success" style="font-size:.76rem;padding:5px 12px;" onclick="saveConcl(3)">💾 Simpan</button>
+    </div>
+    <div id="c3-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent4);">🟠 Kesimpulan 4: Dilatasi</div>
+    <p style="font-size:.79rem;color:var(--text2);margin-bottom:7px;">Apa pengaruh faktor skala k terhadap ukuran dan posisi bayangan?</p>
+    <textarea id="concl4" class="ta" placeholder="Tulis kesimpulanmu tentang dilatasi di sini..." oninput="upCC(4,this.value)"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <div id="c4-ch" style="font-size:.68rem;color:var(--text2);">0 karakter</div>
+      <button class="btn btn-success" style="font-size:.76rem;padding:5px 12px;" onclick="saveConcl(4)">💾 Simpan</button>
+    </div>
+    <div id="c4-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✍️ Refleksi Diri</div>
+    <p style="font-size:.79rem;color:var(--text2);margin-bottom:7px;">Bandingkan dengan hipotesismu di awal. Apa yang berubah? Apa yang kamu pelajari hari ini?</p>
+    <textarea id="refleksi" class="ta" placeholder="Tulis refleksimu di sini..." oninput="document.getElementById('ref-ch').textContent=this.value.length+' karakter'"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <div id="ref-ch" style="font-size:.68rem;color:var(--text2);">0 karakter</div>
+      <button class="btn btn-success" style="font-size:.76rem;padding:5px 12px;" onclick="saveRef()">💾 Simpan Refleksi</button>
+    </div>
+    <div id="ref-fb" class="fbi" style="display:none;"></div>
+  </div>
+
+  <div class="nf">
+    <button class="btn btn-secondary" onclick="go(4)">← Kembali</button>
+    <button class="btn btn-primary" onclick="go(6);toast('info','🧠 Siap uji kemampuan? Yuk kerjakan kuis!')">Ke Kuis →</button>
+  </div>
+</div>
+
+<!-- ═══ SEC 6: KUIS ═══ -->
+<div class="section" id="sec6">
+  <div class="sh"><span class="em">🧠</span>
+    <div><h2>Kuis Transformasi</h2><p>Hitung dulu, baru pilih jawaban! Jika salah, hitung ulang hingga benar.</p></div>
+    <span class="pb2">KUIS</span>
+  </div>
+
+  <div class="card" id="quizCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div style="font-size:.8rem;color:var(--text2);font-weight:700;">Soal <span id="qNum">1</span> dari <span id="qTotal">8</span></div>
+      <div style="font-size:.8rem;color:var(--accent3);font-weight:700;">Skor: <span id="qScore">0</span></div>
+    </div>
+    <div class="pw"><div class="pb" id="quizProg" style="width:12.5%"></div></div>
+    <div id="quizContent" style="margin-top:14px;"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-primary" id="nextQBtn" onclick="nextQ()" style="display:none;">Soal Berikutnya →</button>
+      <button class="btn btn-success" id="finishBtn" onclick="showQResult()" style="display:none;">Lihat Hasil 🎉</button>
+    </div>
+  </div>
+
+  <div id="quizResult" style="display:none;">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.6rem;margin-bottom:6px;" id="resEmoji">🎉</div>
+      <div class="sd" id="finalScore"></div>
+      <div style="font-size:.92rem;color:var(--text2);margin:6px 0;" id="resMsg"></div>
+      <div id="quiz-review" style="margin-top:13px;text-align:left;"></div>
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="restartQuiz()">🔄 Ulangi Kuis</button>
+        <button class="btn btn-primary" onclick="go(0)">🏠 Kembali ke Awal</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nf">
+    <button class="btn btn-secondary" onclick="go(5)">← Kembali</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ─────────────── GLOBALS ───────────────
+let curType='translasi',ekspRows=[],wInited=false,verAns={};
+let qScore=0,qIdx=0,qLog=[],curQ=null,retrying=false,retryTries=0;
+const G=37;
+let simId=null;
+
+// ─────────────── TOAST ───────────────
+let _tt;
+function toast(type,msg,dur=3100){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show '+(type||'');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.className='',dur);
+}
+
+// ─────────────── MASCOT ───────────────
+function mascot(msg){
+  const b=document.getElementById('mascot-bubble');
+  b.textContent=msg;b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),5200);
+}
+
+// ─────────────── NAV ───────────────
+function go(n){
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('active',i===n));
+  document.querySelectorAll('.steps-nav button').forEach((b,i)=>{
+    b.classList.remove('active','done');
+    if(i<n)b.classList.add('done');
+    if(i===n)b.classList.add('active');
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n===2)setTimeout(drawScene,120);
+  if(n===3)initWhite();
+  if(n===4)renderVer();
+  if(n===6)initQuiz();
+}
+
+// ─────────────── TOGGLE Q ───────────────
+function toggleQ(el){
+  const b=el.querySelector('.qb'),t=el.querySelector('.qt');
+  const open=b.style.display==='block';
+  b.style.display=open?'none':'block';
+  t.textContent=open?'Klik ▾':'Klik ▴';
+  if(!open)toast('info','💡 Baca masalah ini dengan teliti!');
+}
+
+// ─────────────── CANVAS UTILS ───────────────
+function gBase(ctx,W,H){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#060f1e';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#1e3a5f';ctx.lineWidth=1;
+  for(let x=0;x<=W;x+=G){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<=H;y+=G){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle='#3b82f6';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
+  ctx.fillStyle='#3b82f6';
+  ctx.beginPath();ctx.moveTo(W,H/2);ctx.lineTo(W-7,H/2-4);ctx.lineTo(W-7,H/2+4);ctx.fill();
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2-4,7);ctx.lineTo(W/2+4,7);ctx.fill();
+  ctx.fillStyle='#64748b';ctx.font='10px Nunito';ctx.textAlign='center';
+  ctx.fillText('x',W-9,H/2-7);ctx.fillText('y',W/2+10,11);ctx.fillText('O',W/2-9,H/2+12);
+  for(let i=-7;i<=7;i++){
+    if(i===0)continue;
+    ctx.fillStyle='#334155';ctx.font='9px Nunito';ctx.textAlign='center';
+    ctx.fillText(i,W/2+i*G,H/2+11);
+    if(i>-7&&i<7)ctx.fillText(i,W/2+7,H/2-i*G+3);
+  }
+}
+function tc(x,y,W,H){return[W/2+x*G,H/2-y*G];}
+function gPt(ctx,x,y,c,lbl,W,H){
+  const[cx,cy]=tc(x,y,W,H);
+  ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 11px Nunito';ctx.textAlign='left';
+  ctx.fillText(lbl,cx+10,cy-5);
+}
+function gDash(ctx,x1,y1,x2,y2,W,H){
+  const[cx1,cy1]=tc(x1,y1,W,H);const[cx2,cy2]=tc(x2,y2,W,H);
+  ctx.beginPath();ctx.setLineDash([5,4]);ctx.strokeStyle='#475569';ctx.lineWidth=1.5;
+  ctx.moveTo(cx1,cy1);ctx.lineTo(cx2,cy2);ctx.stroke();ctx.setLineDash([]);
+}
+
+// ─────────────── SIM CANVAS ───────────────
+const simMsgs={
+  translasi:'🔵 Translasi: A(2,3) digeser 4 kanan, 2 bawah → A\'(6,1). Rumus: (x+a, y+b)',
+  refleksi:'🔴 Refleksi sb-x: A(2,3) → A\'(2,−3). Nilai y berubah tanda!',
+  rotasi:'🟢 Rotasi 90° CCW: A(2,3) → A\'(−3,2). Rumus: (−y, x)',
+  dilatasi:'🟠 Dilatasi k=2: A(2,3) → A\'(4,6). Jarak dari O berlipat dua!'
+};
+const simTargets={translasi:[6,1],refleksi:[2,-3],rotasi:[-3,2],dilatasi:[4,6]};
+function resetSim(){
+  cancelAnimationFrame(simId);
+  const c=document.getElementById('simCanvas');if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  gBase(ctx,W,H);gPt(ctx,2,3,'#f472b6','A(2,3)',W,H);
+  document.getElementById('sim-fb').style.display='none';
+}
+function runSim(type){
+  cancelAnimationFrame(simId);
+  const c=document.getElementById('simCanvas');
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  const[tx,ty]=simTargets[type];const sx=2,sy=3;let p=0;
+  function step(){
+    p+=0.022;if(p>1)p=1;
+    const t=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const cx2=sx+(tx-sx)*t,cy2=sy+(ty-sy)*t;
+    gBase(ctx,W,H);gDash(ctx,sx,sy,tx,ty,W,H);
+    if(p>.08)gPt(ctx,tx,ty,'rgba(52,211,153,.25)','',W,H);
+    gPt(ctx,sx,sy,'#f472b6','A(2,3)',W,H);
+    if(p===1)gPt(ctx,tx,ty,'#34d399',`A'(${tx},${ty})`,W,H);
+    else gPt(ctx,cx2,cy2,'#fb923c','',W,H);
+    if(p<1)simId=requestAnimationFrame(step);
+  }
+  step();
+  const fb=document.getElementById('sim-fb');
+  fb.textContent=simMsgs[type];fb.className='fbi info';fb.style.display='block';
+  toast('info',simMsgs[type],4500);
+  mascot({translasi:'🔵 Amati! Titik bergeser sejauh (a,b).',refleksi:'🔴 Bayangan seperti di cermin!',rotasi:'🟢 Putar! x dan y bertukar.',dilatasi:'🟠 Skala! Ukuran berubah k×.'}[type]);
+}
+
+// ─────────────── MAIN CANVAS (DATA COLLECTION) ───────────────
+function getTrans(px,py){
+  if(curType==='translasi'){const a=+document.getElementById('sl-a').value,b=+document.getElementById('sl-b').value;return[px+a,py+b];}
+  if(curType==='refleksi'){
+    const ax=document.getElementById('ref-axis').value;
+    if(ax==='x')return[px,-py];if(ax==='y')return[-px,py];
+    if(ax==='yx')return[py,px];if(ax==='ynx')return[-py,-px];if(ax==='o')return[-px,-py];
+  }
+  if(curType==='rotasi'){const a=+document.getElementById('rot-angle').value;if(a===90)return[-py,px];if(a===180)return[-px,-py];if(a===270)return[py,-px];}
+  if(curType==='dilatasi'){const k=+document.getElementById('sl-k').value;return[Math.round(k*px*10)/10,Math.round(k*py*10)/10];}
+  return[px,py];
+}
+function drawScene(){
+  const c=document.getElementById('mainCanvas');if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  const[ix,iy]=getTrans(px,py);
+  gBase(ctx,W,H);
+  if(curType==='refleksi'){
+    const ax=document.getElementById('ref-axis').value;
+    ctx.strokeStyle='rgba(244,114,182,.35)';ctx.lineWidth=2;ctx.setLineDash([8,4]);
+    ctx.beginPath();
+    if(ax==='x'){ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);}
+    else if(ax==='y'){ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);}
+    else if(ax==='yx'){ctx.moveTo(0,H);ctx.lineTo(W,0);}
+    else if(ax==='ynx'){ctx.moveTo(0,0);ctx.lineTo(W,H);}
+    else if(ax==='o'){ctx.arc(W/2,H/2,11,0,Math.PI*2);}
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  gDash(ctx,px,py,ix,iy,W,H);
+  gPt(ctx,px,py,'#f472b6',`P(${px},${py})`,W,H);
+  gPt(ctx,ix,iy,'#34d399',`P'(${ix},${iy})`,W,H);
+  document.getElementById('res-orig').textContent=`P(${px}, ${py})`;
+  document.getElementById('res-img').textContent=`P'(${ix}, ${iy})`;
+  const dx=ix-px,dy=iy-py;
+  document.getElementById('res-delta').textContent=`Δx=${dx>=0?'+':''}${dx}, Δy=${dy>=0?'+':''}${dy}`;
+}
+function onCC(){
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  if(Math.abs(px)>6||Math.abs(py)>6){toast('warning','⚠️ Gunakan koordinat antara -6 dan 6');return;}
+  drawScene();toast('info',`📍 Titik diubah ke P(${px},${py}) — bayangan dihitung ulang!`,2200);
+}
+function uv(id,v){document.getElementById(id).textContent=v;}
+
+function setT(type,btn){
+  curType=type;
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  [{id:'ct',t:'translasi'},{id:'cr',t:'refleksi'},{id:'cro',t:'rotasi'},{id:'cd',t:'dilatasi'}].forEach(o=>{
+    document.getElementById(o.id).style.display=o.t===type?'':'none';
+  });
+  const ti={translasi:'🔵 Translasi',refleksi:'🔴 Refleksi',rotasi:'🟢 Rotasi',dilatasi:'🟠 Dilatasi'};
+  document.getElementById('transTitle').textContent=ti[type];
+  drawScene();
+  const mm={translasi:'🔵 Geser slider a dan b untuk translasi!',refleksi:'🔴 Coba ganti sumbu pencerminan.',rotasi:'🟢 Amati bagaimana x dan y bertukar.',dilatasi:'🟠 k>1 perbesar, 0<k<1 perkecil, k<0 cermin!'};
+  mascot(mm[type]);
+  toast('info',`Tab ${ti[type]} dipilih!`,2000);
+}
+
+// LIVE FEEDBACK
+function feedT(){
+  const a=+document.getElementById('sl-a').value,b=+document.getElementById('sl-b').value;
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  const el=document.getElementById('fb-t');
+  el.textContent=`✅ P(${px},${py}) + T(${a>=0?'+':''}${a},${b>=0?'+':''}${b}) → P'(${px+a},${py+b}). `+(a>0?'Geser kanan':a<0?'Geser kiri':'Tetap')+'/'+(b>0?'atas':b<0?'bawah':'tetap')+'.';
+  el.className='fbi ok';
+}
+function feedR(){
+  const ax=document.getElementById('ref-axis').value;
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  const[ix,iy]=getTrans(px,py);
+  const lb={x:'sumbu-x → y berubah tanda',y:'sumbu-y → x berubah tanda',yx:'y=x → x dan y ditukar',ynx:'y=−x → tukar & negasi',o:'titik O → keduanya dinegasi'};
+  const el=document.getElementById('fb-r');
+  el.textContent=`🪞 Refleksi ${lb[ax]}: P(${px},${py}) → P'(${ix},${iy})`;el.className='fbi ok';
+}
+function feedRo(){
+  const ang=document.getElementById('rot-angle').value;
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  const[ix,iy]=getTrans(px,py);
+  const ru={90:'(−y,x)',180:'(−x,−y)',270:'(y,−x)'};
+  const el=document.getElementById('fb-ro');
+  el.textContent=`🔄 Rotasi ${ang}° CCW [${ru[ang]}]: P(${px},${py}) → P'(${ix},${iy}). Jarak ke O = √(${px*px+py*py}) tetap!`;el.className='fbi ok';
+}
+function feedD(){
+  const k=+document.getElementById('sl-k').value;
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  const[ix,iy]=getTrans(px,py);
+  const el=document.getElementById('fb-d');
+  const ket=Math.abs(k)>1?'DIPERBESAR':'DIPERKECIL';const neg=k<0?' + dicerminkan dari pusat':'';
+  el.textContent=`🔍 Dilatasi k=${k}: P(${px},${py}) → P'(${ix},${iy}). Jarak ${ket} ${Math.abs(k)}×${neg}.`;el.className='fbi ok';
+}
+
+// ─────────────── EKSPLORASI TABLE ───────────────
+function addRow(){
+  const px=+document.getElementById('px').value,py=+document.getElementById('py').value;
+  const[ix,iy]=getTrans(px,py);
+  let p='';
+  if(curType==='translasi'){const a=document.getElementById('sl-a').value,b=document.getElementById('sl-b').value;p=`T(${a},${b})`;}
+  if(curType==='refleksi')p='sb:'+document.getElementById('ref-axis').value;
+  if(curType==='rotasi')p=document.getElementById('rot-angle').value+'°CCW';
+  if(curType==='dilatasi')p='k='+document.getElementById('sl-k').value;
+  ekspRows.push({j:curType,a:`(${px},${py})`,p,b:`(${ix},${iy})`,pol:''});
+  renderEksp();
+  const n=ekspRows.length;
+  const fb=document.getElementById('eksp-fb');
+  if(n<4){fb.textContent=`✅ Data ke-${n} tercatat! Kumpulkan minimal 8 baris.`;fb.className='fbi info';fb.style.display='block';}
+  else if(n<8){fb.textContent=`🔥 ${n} data terkumpul! Terus eksplorasi berbagai variasi.`;fb.className='fbi info';fb.style.display='block';}
+  else{fb.textContent=`🏆 ${n} data terkumpul! Sudah cukup untuk menemukan pola. Lanjut olah data!`;fb.className='fbi ok';fb.style.display='block';}
+  toast('success',`📊 Data ke-${n} dicatat!`,2200);
+}
+function renderEksp(){
+  const tb=document.getElementById('ekspBody');
+  tb.innerHTML=ekspRows.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.j}</td><td>${r.a}</td><td>${r.p}</td><td>${r.b}</td>
+    <td><input style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-family:Nunito,sans-serif;font-size:.78rem;width:105px;" placeholder="Polamu..." value="${r.pol}" oninput="ekspRows[${i}].pol=this.value;toast('info','✏️ Pola dicatat!',1500)"></td>
+  </tr>`).join('');
+  document.getElementById('eksp-cnt').textContent=`${ekspRows.length} data tercatat`;
+}
+function clearEksp(){ekspRows=[];renderEksp();toast('info','🗑 Tabel dibersihkan.');}
+
+// ─────────────── DATA PROCESSING ───────────────
+const dpKW={1:['x+','y+'],2:['y\'=-y','-y','y=-y'],3:['-y','(-y,x)','x\'=-y'],4:['kx','k*x','k.x','k·x']};
+function chDP(n){
+  const v=document.getElementById('dp'+n).value.toLowerCase().replace(/\s/g,'');
+  const fb=document.getElementById('dp'+n+'-fb');
+  const inp=document.getElementById('dp'+n);
+  if(v.length<3){fb.style.display='none';inp.style.borderColor='var(--border)';return;}
+  const hit=dpKW[n].some(k=>v.includes(k.replace(/\s/g,'')));
+  if(hit){
+    fb.textContent='✅ Jawabanmu mengarah ke rumus yang benar! Kembangkan lebih lanjut.';
+    fb.className='fbi ok';fb.style.display='block';inp.style.borderColor='var(--accent3)';
+  } else {
+    fb.textContent='💡 Perhatikan pola dari tabel datamu. Komponen mana yang berubah?';
+    fb.className='fbi warn';fb.style.display='block';inp.style.borderColor='var(--accent4)';
+  }
+}
+function showAllDP(){
+  document.getElementById('dp-all').style.display='block';
+  const fb=document.getElementById('dp-all-fb');
+  fb.textContent='📚 Rumus lengkap ditampilkan! Bandingkan dengan jawabanmu — pahami perbedaannya!';
+  fb.className='fbi info';fb.style.display='block';
+  toast('success','✅ Rumus lengkap ditampilkan!');
+  mascot('Bandingkan rumusmu dengan yang benar. Apa yang berbeda?');
+}
+
+// ─────────────── WHITEBOARD ───────────────
+function initWhite(){
+  if(wInited)return;wInited=true;
+  const c=document.getElementById('whiteCanvas');if(!c)return;
+  const ctx=c.getContext('2d');let drawing=false;
+  function gp(e){const r=c.getBoundingClientRect();const s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];}
+  c.onmousedown=c.ontouchstart=e=>{drawing=true;const[x,y]=gp(e);ctx.beginPath();ctx.moveTo(x,y);e.preventDefault();};
+  c.onmousemove=c.ontouchmove=e=>{
+    if(!drawing)return;const[x,y]=gp(e);
+    ctx.lineWidth=+document.getElementById('penSize').value;
+    ctx.strokeStyle=document.getElementById('penColor').value;
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.lineTo(x,y);ctx.stroke();ctx.beginPath();ctx.moveTo(x,y);e.preventDefault();
+  };
+  c.onmouseup=c.ontouchend=()=>{drawing=false;ctx.beginPath();toast('info','✏️ Tulisan ditambahkan!',1800);};
+}
+function clearWhite(){
+  const c=document.getElementById('whiteCanvas');c.getContext('2d').clearRect(0,0,c.width,c.height);
+  toast('info','🗑 Papan kerja dibersihkan!');
+}
+
+// ─────────────── VERIFICATION ───────────────
+const verS=[
+  {q:'Titik P(5, −3) ditranslasikan oleh T(−2, 4). Tentukan bayangan P!',key:'3,1',hint:'(x+a,y+b): 5+(−2)=3, −3+4=1',ans:"P'(3, 1)"},
+  {q:'Titik Q(−4, 6) direfleksikan terhadap sumbu-x. Tentukan bayangannya!',key:'-4,-6',hint:'Sumbu-x: x tetap, y berubah tanda → (−4,−6)',ans:"Q'(−4, −6)"},
+  {q:'Titik R(3, 5) dirotasikan 90° CCW terhadap O(0,0). Tentukan bayangannya!',key:'-5,3',hint:'90° CCW: (−y,x) → (−5,3)',ans:"R'(−5, 3)"},
+  {q:'Titik S(2, −3) dikenai dilatasi [O, 3]. Tentukan bayangannya!',key:'6,-9',hint:'(kx,ky): 3×2=6, 3×(−3)=−9',ans:"S'(6, −9)"},
+];
+function renderVer(){
+  const el=document.getElementById('verSoal');
+  el.innerHTML=verS.map((s,i)=>`
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--accent);">
+      <div style="font-weight:800;font-size:.84rem;margin-bottom:4px;color:var(--accent);">Soal ${i+1}</div>
+      <p style="font-size:.87rem;margin-bottom:8px;">${s.q}</p>
+      <input id="ver${i}" style="background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.86rem;width:180px;outline:none;transition:border-color .2s;" placeholder="Jawabanmu...">
+      <button class="btn btn-secondary" style="margin-left:6px;font-size:.76rem;" onclick="chV(${i})">✓ Periksa</button>
+      <button class="btn btn-secondary" style="margin-left:3px;font-size:.76rem;" onclick="document.getElementById('ht${i}').style.display='block';toast('info','💡 Petunjuk!')">💡 Petunjuk</button>
+      <div id="ht${i}" style="display:none;margin-top:6px;font-size:.78rem;color:var(--accent4);">💡 ${s.hint}</div>
+      <div id="vfb${i}" class="fbi" style="display:none;margin-top:6px;"></div>
+    </div>
+  `).join('');
+  verAns={};document.getElementById('ver-score').style.display='none';
+}
+function chV(i){
+  const v=document.getElementById('ver'+i).value.trim().replace(/\s/g,'');
+  const key=verS[i].key;
+  const ok=v.replace(/[^0-9\-,]/g,'').includes(key)||v.toLowerCase().includes(key);
+  const fb=document.getElementById('vfb'+i);
+  const inp=document.getElementById('ver'+i);
+  if(ok){
+    fb.textContent=`✅ Benar! Jawaban: ${verS[i].ans}`;fb.className='fbi ok';fb.style.display='block';
+    inp.style.borderColor='var(--accent3)';verAns[i]=true;toast('success',`🎉 Soal ${i+1} benar!`);
+  } else {
+    fb.textContent=`❌ Belum tepat. Hitung ulang! Petunjuk: ${verS[i].hint}`;fb.className='fbi err';fb.style.display='block';
+    inp.style.borderColor='var(--accent2)';verAns[i]=false;toast('error',`Soal ${i+1}: coba lagi!`);
+  }
+}
+function checkVer(){verS.forEach((_,i)=>chV(i));const c=Object.values(verAns).filter(Boolean).length;const t=verS.length;const el=document.getElementById('ver-score');document.getElementById('ver-num').textContent=`${c}/${t} Benar`;document.getElementById('ver-msg').textContent=c===t?'🏆 Sempurna!':c>=2?`${c} benar. Perbaiki yang salah!`:'Coba lagi dengan petunjuk!';el.style.display='block';toast(c===t?'success':'info',`Skor verifikasi: ${c}/${t}`);}
+function showVerAns(){verS.forEach((s,i)=>{const fb=document.getElementById('vfb'+i);fb.textContent=`📚 ${s.ans} — ${s.hint}`;fb.className='fbi info';fb.style.display='block';});toast('info','📚 Semua jawaban ditampilkan!');}
+
+// ─────────────── GENERALIZATION ───────────────
+function upCC(n,v){document.getElementById('c'+n+'-ch').textContent=v.length+' karakter';}
+function saveConcl(n){
+  const v=document.getElementById('concl'+n).value.trim();
+  const fb=document.getElementById('c'+n+'-fb');
+  if(!v){fb.textContent='⚠️ Harap tulis kesimpulanmu terlebih dahulu!';fb.className='fbi err';fb.style.display='block';return;}
+  if(v.length<25){fb.textContent='💡 Kesimpulanmu terlalu singkat. Jelaskan lebih lengkap dengan kata-katamu sendiri!';fb.className='fbi warn';fb.style.display='block';toast('warning','Kesimpulan terlalu singkat!');return;}
+  fb.textContent='✅ Kesimpulan tersimpan! Kamu berhasil menemukan pola sendiri — itulah inti Guided Discovery Learning!';
+  fb.className='fbi ok';fb.style.display='block';
+  document.getElementById('concl'+n).style.borderColor='var(--accent3)';
+  toast('success','🌟 Kesimpulan disimpan!');
+  mascot('Bagus sekali! Kamu berhasil menyimpulkan sendiri. Ini tandamu sudah paham!');
+}
+function saveHip(){
+  const v=document.getElementById('hipotesis').value.trim();
+  const fb=document.getElementById('hip-fb');
+  if(!v){fb.textContent='⚠️ Tulis hipotesismu terlebih dahulu!';fb.className='fbi err';fb.style.display='block';return;}
+  fb.textContent='✅ Hipotesis tersimpan! Ingat dugaanmu ini — kita akan buktikan saat eksplorasi.';
+  fb.className='fbi ok';fb.style.display='block';
+  document.getElementById('hipotesis').style.borderColor='var(--accent3)';
+  toast('success','💾 Hipotesis disimpan!');
+}
+function saveRef(){
+  const v=document.getElementById('refleksi').value.trim();
+  const fb=document.getElementById('ref-fb');
+  if(!v){fb.textContent='Tulis refleksimu terlebih dahulu!';fb.className='fbi err';fb.style.display='block';return;}
+  fb.textContent='✅ Refleksi tersimpan! Ini adalah bukti nyata pertumbuhanmu sebagai pelajar.';
+  fb.className='fbi ok';fb.style.display='block';
+  document.getElementById('refleksi').style.borderColor='var(--accent3)';
+  toast('success','🌟 Refleksi tersimpan! Luar biasa!');
+}
+
+// ─────────────── CELEBRATION ───────────────
+const celM=[
+  {e:'🌸🎉🌸',t:'Luar Biasa Sekali!',s:'Jawabanmu 100% benar! Matematika ada di genggamanmu!'},
+  {e:'🌺🏆🌺',t:'Kamu Jenius!',s:'Tepat sekali! Rumus transformasi sudah kamu kuasai!'},
+  {e:'🌻🎊🌻',t:'Mantap Banget!',s:'Jawaban sempurna! Pertahankan semangatmu!'},
+  {e:'🌹✨🌹',t:'Wow, Benar!',s:'Kalkulasimu akurat! Hebat sekali!'},
+  {e:'💐🥳💐',t:'Bravo!',s:'Kamu menguasai materi ini. Terus pertahankan!'},
+  {e:'🎆🌟🎆',t:'Spektakuler!',s:'Jawaban benar! Kamu berbakat dalam matematika!'},
+  {e:'🎇🎊🎇',t:'Keren Banget!',s:'Tepat! Selangkah lebih dekat ke nilai sempurna!'},
+  {e:'🌼🏅🌼',t:'Hebat Sekali!',s:'Benar! Kamu membuktikan pemahamanmu dengan baik!'},
+];
+function celebrate(n){
+  const m=celM[n%celM.length];
+  document.getElementById('cel-emoji').textContent=m.e;
+  document.getElementById('cel-title').textContent=m.t;
+  document.getElementById('cel-sub').textContent=m.s;
+  document.getElementById('cel-msg').classList.add('show');
+  const cont=document.getElementById('celebrate');
+  cont.style.display='block';cont.innerHTML='';
+  const clr=['#f472b6','#34d399','#38bdf8','#fb923c','#a78bfa','#fbbf24','#f87171','#4ade80','#c084fc','#67e8f9'];
+  for(let i=0;i<65;i++){
+    const p=document.createElement('div');p.className='petal';
+    const sz=7+Math.random()*11;
+    p.style.cssText=`left:${Math.random()*100}vw;background:${clr[i%clr.length]};width:${sz}px;height:${sz}px;animation-duration:${1.4+Math.random()*2.4}s;animation-delay:${Math.random()*.9}s;border-radius:${Math.random()>.5?'50%':'4px'}`;
+    cont.appendChild(p);
+  }
+  setTimeout(()=>{cont.innerHTML='';cont.style.display='none';},5500);
+}
+function closeCel(){
+  document.getElementById('cel-msg').classList.remove('show');
+  document.getElementById('celebrate').style.display='none';
+  document.getElementById('celebrate').innerHTML='';
+}
+
+// ─────────────── QUIZ ───────────────
+const RAW=[
+  {q:'Titik A(2, 5) ditranslasikan oleh T(3, −1). Bayangan A adalah...',c:"A'(5, 4)",w:["A'(5, 6)","A'(−1, 6)","A'(1, 4)"],e:'x\'=2+3=5, y\'=5+(−1)=4'},
+  {q:'Bayangan titik B(−3, 4) jika direfleksikan terhadap sumbu-y adalah...',c:"B'(3, 4)",w:["B'(−3, −4)","B'(4, −3)","B'(−3, 4)"],e:'Refleksi sb-y: x\'=−(−3)=3, y\'=4 tetap'},
+  {q:'Titik C(4, −2) dirotasikan 90° CCW terhadap O(0,0). Bayangannya adalah...',c:"C'(2, 4)",w:["C'(−2, 4)","C'(−2, −4)","C'(4, 2)"],e:'90° CCW: x\'=−y=2, y\'=x=4'},
+  {q:'Titik D(2, 3) dikenai dilatasi [O, −2]. Bayangan D adalah...',c:"D'(−4, −6)",w:["D'(4, 6)","D'(−6, −4)","D'(4, −6)"],e:'k=−2: x\'=−4, y\'=−6'},
+  {q:'Titik P(6, −4) direfleksikan terhadap garis y = x. Bayangannya adalah...',c:"P'(−4, 6)",w:["P'(4, −6)","P'(−6, 4)","P'(6, 4)"],e:'Refl y=x: tukar x dan y → (−4, 6)'},
+  {q:'Titik Q(−3, −5) dirotasikan 180° terhadap O(0,0). Bayangannya adalah...',c:"Q'(3, 5)",w:["Q'(5, 3)","Q'(−5, −3)","Q'(3, −5)"],e:'180°: x\'=−(−3)=3, y\'=−(−5)=5'},
+  {q:'Titik R(4, 3) dikenai dilatasi [O, ½]. Bayangannya adalah...',c:"R'(2, 1.5)",w:["R'(8, 6)","R'(2, 3)","R'(1.5, 2)"],e:'k=0.5: x\'=2, y\'=1.5'},
+  {q:'Titik S(5, −3) direfleksikan terhadap sumbu-x. Bayangannya adalah...',c:"S'(5, 3)",w:["S'(−5, −3)","S'(−5, 3)","S'(3, 5)"],e:'Refl sb-x: x\'=5, y\'=−(−3)=3'},
+];
+let QD=[];
+
+function buildQD(){
+  QD=RAW.map(r=>{
+    const opts=[...r.w];
+    const pos=Math.floor(Math.random()*4);
+    opts.splice(pos,0,r.c);
+    if(opts.length>4)opts.pop();
+    return{q:r.q,opts,ans:pos,c:r.c,e:r.e};
+  });
+}
+
+function initQuiz(){
+  buildQD();qScore=0;qIdx=0;qLog=[];retrying=false;retryTries=0;
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('quizCard').style.display='';
+  document.getElementById('qScore').textContent=0;
+  renderQ();
+  toast('info','🧠 Kuis dimulai! Hitung dulu sebelum memilih jawaban!',3500);
+  mascot('Semangat! Kalau salah, kamu bisa hitung ulang sampai benar!');
+}
+
+function renderQ(){
+  retrying=false;retryTries=0;
+  const q=QD[qIdx];curQ=q;
+  document.getElementById('qNum').textContent=qIdx+1;
+  document.getElementById('qTotal').textContent=QD.length;
+  document.getElementById('quizProg').style.width=((qIdx+1)/QD.length*100)+'%';
+  document.getElementById('quizContent').innerHTML=`
+    <div class="qq">${q.q}</div>
+    <div class="qopts">${q.opts.map((o,i)=>`<button class="qo" onclick="ansQ(${i})" id="qo${i}">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div>
+    <div id="qfb"></div>
+    <div id="retry-box">
+      <p>🔄 Ayo hitung ulang! Pilih kembali jawaban yang benar:</p>
+      <div id="retry-opts"></div>
+      <div id="retry-msg"></div>
+    </div>
+  `;
+  document.getElementById('nextQBtn').style.display='none';
+  document.getElementById('finishBtn').style.display='none';
+}
+
+function ansQ(idx){
+  if(retrying)return;
+  const q=curQ;const ok=idx===q.ans;
+  document.querySelectorAll('.qo').forEach(b=>b.disabled=true);
+  if(ok){
+    document.getElementById('qo'+idx).classList.add('correct');
+    const fb=document.getElementById('qfb');
+    fb.className='qfb ok';fb.innerHTML=`✅ <strong>Benar!</strong> ${q.e}`;
+    qScore++;qLog.push({ok:true});
+    document.getElementById('qScore').textContent=qScore;
+    celebrate(qIdx);
+    showNext();
+  } else {
+    document.getElementById('qo'+idx).classList.add('wrong','shake');
+    setTimeout(()=>document.getElementById('qo'+idx)?.classList.remove('shake'),450);
+    const fb=document.getElementById('qfb');
+    fb.className='qfb err';fb.innerHTML=`❌ <strong>Belum tepat!</strong> Yuk hitung ulang dulu!<br><small style="color:var(--text2);">Petunjuk: ${q.e}</small>`;
+    toast('error','❌ Salah! Hitung ulang dan pilih lagi sampai benar!',3200);
+    mascot('Jangan menyerah! Baca petunjuknya dan hitung ulang. Pasti bisa! 💪');
+    // show retry
+    retrying=true;
+    const rb=document.getElementById('retry-box');rb.style.display='block';
+    document.getElementById('retry-opts').innerHTML=q.opts.map((o,i)=>`
+      <button class="qo" id="ro${i}" onclick="retryQ(${i})" ${i===idx?'style="opacity:.4;cursor:not-allowed;" disabled':''}>
+        ${String.fromCharCode(65+i)}. ${o}
+      </button>`).join('');
+  }
+}
+
+function retryQ(idx){
+  const q=curQ;const ok=idx===q.ans;
+  const btn=document.getElementById('ro'+idx);
+  const msg=document.getElementById('retry-msg');
+  if(ok){
+    btn.classList.add('correct');
+    document.querySelectorAll('#retry-opts .qo').forEach(b=>b.disabled=true);
+    msg.style.color='var(--accent3)';
+    msg.textContent='✅ Benar! Kamu berhasil menemukan jawaban yang tepat setelah menghitung ulang!';
+    qLog.push({ok:false,retry:true});
+    showNext();
+    toast('success','✅ Setelah menghitung ulang, kamu berhasil! 👏',3000);
+    celebrate(qIdx);
+    retrying=false;
+  } else {
+    btn.classList.add('shake');setTimeout(()=>btn?.classList.remove('shake'),450);
+    retryTries++;
+    msg.style.color='var(--accent2)';
+    if(retryTries<2){
+      msg.textContent=`❌ Masih belum tepat. Baca lagi petunjuknya: ${q.e}`;
+      toast('error','Masih salah! Coba sekali lagi!',2800);
+    } else {
+      // reveal after 2 wrong retries
+      document.querySelectorAll('#retry-opts .qo').forEach((b,i)=>{
+        if(i===q.ans)b.classList.add('correct');
+        b.disabled=true;
+      });
+      msg.textContent=`💡 Jawaban yang benar adalah: ${q.c}. Pelajari kembali rumusnya ya!`;
+      msg.style.color='var(--accent4)';
+      qLog.push({ok:false,give:true});
+      showNext();toast('info',`Jawaban: ${q.c}. Pelajari rumusnya kembali!`,3500);
+      retrying=false;
+    }
+  }
+}
+
+function showNext(){
+  if(qIdx<QD.length-1)document.getElementById('nextQBtn').style.display='inline-block';
+  else document.getElementById('finishBtn').style.display='inline-block';
+}
+function nextQ(){qIdx++;renderQ();toast('info',`Soal ${qIdx+1} dari ${QD.length}. Tetap teliti!`,2200);}
+
+function showQResult(){
+  document.getElementById('quizCard').style.display='none';
+  document.getElementById('quizResult').style.display='block';
+  const pct=qScore/QD.length;
+  document.getElementById('finalScore').textContent=`${qScore} / ${QD.length}`;
+  document.getElementById('resEmoji').textContent=pct===1?'🏆':pct>=.75?'🎉':pct>=.5?'👍':'💪';
+  const ms=[[1,'🏆 SEMPURNA! Kamu menguasai seluruh materi transformasi! Keren sekali!'],[.75,'🎉 HEBAT! Pemahamanmu sangat baik. Pelajari soal yang kurang.'],[.5,'👍 BAGUS! Sebagian besar sudah dipahami. Eksplorasi lagi yuk!'],[0,'💪 SEMANGAT! Kembali ke fase eksplorasi dan coba kuis lagi!']];
+  document.getElementById('resMsg').textContent=ms.find(([t])=>pct>=t)[1];
+  document.getElementById('quiz-review').innerHTML=
+    '<div style="font-weight:800;color:var(--accent);margin-bottom:7px;font-size:.84rem;">📋 Review Jawaban:</div>'+
+    qLog.map((a,i)=>`<div style="display:flex;align-items:flex-start;gap:5px;padding:4px 0;border-bottom:1px solid var(--border);font-size:.77rem;">
+      <span style="color:${a.ok?'var(--accent3)':a.retry?'var(--accent4)':'var(--accent2)'};">${a.ok?'✅':a.retry?'🔄':'❌'}</span>
+      <span>Soal ${i+1}: ${a.ok?'<strong style="color:var(--accent3)">Langsung benar</strong>':a.retry?'<span style="color:var(--accent4)">Benar setelah menghitung ulang</span>':'<span style="color:var(--accent2)">Perlu dipelajari lagi</span>'} — ${QD[i]?.e||''}</span>
+    </div>`).join('');
+  toast(pct>=.75?'success':'info',`Kuis selesai! Skor: ${qScore}/${QD.length}`);
+  if(pct===1)celebrate(99);
+}
+function restartQuiz(){document.getElementById('quizCard').style.display='';document.getElementById('quizResult').style.display='none';initQuiz();}
+
+// ─────────────── INIT ───────────────
+window.onload=()=>{
+  resetSim();
+  setTimeout(drawScene,200);
+  setTimeout(()=>mascot('👋 Halo! Aku siap membantumu. Klik simulasi untuk mulai!'),1300);
+  setTimeout(()=>toast('info','🎓 Selamat datang di Multimedia Transformasi! Ikuti setiap fase GDL.',4500),800);
+};
+</script>
+</body>
+</html>
