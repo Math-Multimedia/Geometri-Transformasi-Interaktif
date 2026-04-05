@@ -406,7 +406,6 @@ canvas{display:block;border-radius:11px;max-width:100%}
     </div>
 
     <div id="ct"><!-- translasi -->
-      <div class="fml">Rumus: <span>P'(x + a, y + b)</span></div>
       <div class="cr"><span>Pergeseran:</span>
         <div class="cg"><label>a (horizontal) = <span class="vd" id="v-a">3</span></label><input type="range" min="-6" max="6" value="3" id="sl-a" oninput="uv('v-a',this.value);drawScene();feedT()"></div>
         <div class="cg"><label>b (vertikal) = <span class="vd" id="v-b">2</span></label><input type="range" min="-6" max="6" value="2" id="sl-b" oninput="uv('v-b',this.value);drawScene();feedT()"></div>
@@ -415,7 +414,6 @@ canvas{display:block;border-radius:11px;max-width:100%}
     </div>
 
     <div id="cr" style="display:none;"><!-- refleksi -->
-      <div class="fml" style="font-size:.78rem;">sb-x:<span>(x,−y)</span> | sb-y:<span>(−x,y)</span> | y=x:<span>(y,x)</span> | y=−x:<span>(−y,−x)</span> | O:<span>(−x,−y)</span></div>
       <div class="cg" style="margin-top:7px;"><label>Pilih Sumbu Pencerminan</label>
         <select id="ref-axis" onchange="drawScene();feedR()">
           <option value="x">Sumbu-x</option><option value="y">Sumbu-y</option>
@@ -427,7 +425,6 @@ canvas{display:block;border-radius:11px;max-width:100%}
     </div>
 
     <div id="cro" style="display:none;"><!-- rotasi -->
-      <div class="fml" style="font-size:.78rem;">90° CCW:<span>(−y,x)</span> | 180°:<span>(−x,−y)</span> | 270° CCW:<span>(y,−x)</span></div>
       <div class="cg" style="margin-top:7px;"><label>Pilih Sudut Rotasi (pusat O)</label>
         <select id="rot-angle" onchange="drawScene();feedRo()">
           <option value="90">90° (berlawanan arah jarum jam)</option>
@@ -438,7 +435,6 @@ canvas{display:block;border-radius:11px;max-width:100%}
     </div>
 
     <div id="cd" style="display:none;"><!-- dilatasi -->
-      <div class="fml">Rumus: <span>P'(k·x, k·y)</span> — k = faktor skala</div>
       <div class="cg" style="margin-top:7px;"><label>Faktor Skala k = <span class="vd" id="v-k">2</span></label>
         <input type="range" min="-3" max="3" step="0.5" value="2" id="sl-k" oninput="uv('v-k',this.value);drawScene();feedD()">
       </div>
